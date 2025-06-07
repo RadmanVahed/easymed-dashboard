@@ -4,8 +4,8 @@
 </script>
 
 <template>
-  <div>
+   <UApp>
     <NuxtLoadingIndicator />
     <NuxtPage />
-  </div>
+  </UApp>
 </template>
