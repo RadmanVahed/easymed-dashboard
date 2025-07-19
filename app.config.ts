@@ -1,0 +1,25 @@
+export default defineAppConfig({
+  ui: {
+    select:{
+        slots:{
+            content:'rtl',
+            base:'rtl'
+        }
+    },
+    dropdownMenu:{
+        slots:{
+            group:'rtl'
+        }
+    },
+    input:{
+        slots:{
+            base:'rtl'
+        }
+    },
+    toast:{
+        slots:{
+            root:'rtl'
+        }
+    }
+  }
+})
