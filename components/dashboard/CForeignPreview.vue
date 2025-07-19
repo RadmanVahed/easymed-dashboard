@@ -1,6 +1,5 @@
 <template>
   <ClientOnly>
-    <!-- now <apexchart> is known, and only renders on client -->
     <apexchart
       type="radialBar"
       :options="options"
@@ -14,10 +13,8 @@
 import { ref } from 'vue'
 import type { ApexOptions } from 'apexcharts'
 
-// 1) make your series reactive
 const series = ref<number[]>([75])
 
-// 2) make your options reactive & typed
 const options = ref<ApexOptions>({
   chart: {
     type: 'radialBar',
@@ -60,7 +57,7 @@ const options = ref<ApexOptions>({
           fontSize: '17px'
         },
         value: {
-          formatter: (val:any) => parseInt(val, 10).toString(),
+          formatter: (val: any) => parseInt(val, 10).toString(),
           color: '#111',
           fontSize: '36px',
           show: true

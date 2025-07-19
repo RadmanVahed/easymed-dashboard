@@ -6,20 +6,12 @@
           <div class="ml-4">
             <ColorModeButton />
           </div>
-          <USeparator  icon="i-lucide-layout-dashboard" label="داشبورد ایزی مد" />
+          <USeparator icon="i-lucide-layout-dashboard" label="داشبورد ایزی مد" />
         </div>
       </div>
-      <UContainer>
-        <div class="flex justify-end">
-          <div class="w-full">
-            <DashboardCDoctorTicketPreview />
-          </div>
-          <div class="w-[500px] !max-h-[300px]">
-            <DashboardCDoctorPreview />
-          </div>
-        </div>
-        <hr style="border-color: var(--ui-border);" class="my-8">
-      </UContainer>
+      <MenuDashboardPanel v-if="selected == 'dashboard'" />
+      <MenuDoctorAppPanel v-if="selected == 'doctor-app'" />
+      <MenuForeignPanel v-if="selected == 'foreign'" />
     </div>
     <div>
       <div class="border-l p-4 py-20 h-screen" style="border-color: var(--ui-border);">

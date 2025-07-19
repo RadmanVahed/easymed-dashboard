@@ -1,7 +1,6 @@
 <template>
   <div>
     <h1 class="flex justify-end text-lg mb-2">نمودار ورود اپ پزشک</h1>
-    <!-- bind a ref so we can call its updateOptions() -->
     <apexchart
       ref="chartRef"
       type="area"
@@ -17,7 +16,6 @@ import type { ApexOptions } from 'apexcharts'
 
 const colorMode = useColorMode()
 
-// Only ever 'light' or 'dark'
 const themeMode = computed<'light' | 'dark'>(() =>
   colorMode.value === 'dark' ? 'dark' : 'light'
 )
@@ -34,7 +32,6 @@ const options = computed<ApexOptions>(() => ({
     background: 'transparent'
   },
   theme: {
-    // now themeMode.value is typed correctly
     mode: themeMode.value
   },
   dataLabels: { enabled: false },
