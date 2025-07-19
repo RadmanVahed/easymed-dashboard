@@ -135,28 +135,31 @@
                     </div>
                     </div>
                 </div>
-                <div class="w-full flex flex-col gap-3">
+                <div v-if="editFormData" class="w-full flex flex-col gap-3">
                     <UFormField label="نام و نام خانوادگی">
-                        <UInput class="w-full" :model-value="openModal.data?.name" />
+                        <UInput class="w-full" v-model="editFormData.name" />
                     </UFormField>
                     <div class="w-full flex gap-2">
                         <UFormField class="w-full" label="شماره تماس">
-                        <UInput class="w-full" :model-value="openModal.data?.phone" />
+                        <UInput class="w-full" v-model="editFormData.phone" />
                     </UFormField>
                     <UFormField class="w-full" label="شناسه پرداخت">
-                        <UInput class="w-full" :model-value="openModal.data?.paymentId" />
+                        <UInput class="w-full" v-model="editFormData.paymentId" />
                     </UFormField>
                     </div>
                     <UFormField label="ایمیل">
-                        <UInput class="w-full" :model-value="openModal.data?.email" />
+                        <UInput class="w-full" v-model="editFormData.email" />
                     </UFormField>
                     <UFormField label="شهر">
-                        <UInput class="w-full" :model-value="openModal.data?.city" />
+                        <UInput class="w-full" v-model="editFormData.city" />
                     </UFormField>
                     <UFormField label="پیام">
-                        <UTextarea class="w-full" :model-value="openModal.data?.message" />
+                        <UTextarea class="w-full" v-model="editFormData.message" />
                     </UFormField>
-                    <UButton block>ذخیره</UButton>
+                    <UFormField label="یادداشت">
+                        <UTextarea class="w-full" v-model="editFormData.notes" />
+                    </UFormField>
+                    <UButton @click="editRequest(openModal.data || null)" block>ذخیره</UButton>
                 </div>
             </div>
         </template>
@@ -175,6 +178,7 @@ const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UInput = resolveComponent('UInput')
 const USelect = resolveComponent('USelect')
+const editFormData = ref<MedicalRequest | null>(null)
 const openModal = ref({
     open: false,
     title: '',
@@ -195,6 +199,7 @@ type MedicalRequest = {
     phone: string
     city: string
     email: string
+    notes:string
     message: string
     status: 'pending' | 'accepted' | 'done' | 'canceled'
     statusText: string
@@ -324,6 +329,7 @@ function restModal() {
         key: '',
         data: null
     }
+    editFormData.value = null
 }
 
 const defineColor = (status: string | undefined) => {
@@ -343,7 +349,56 @@ const defineColor = (status: string | undefined) => {
     }
 
 }
+// API Edit Request
+const editRequest = async (data: MedicalRequest | null) => {
+    if (!editFormData.value) return
+    
+    try {
+        loading.value = true
+        const response = await fetch(`${API_BASE}/api/edit-request`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                requestId: editFormData.value.id,
+                updatedData: {
+                    name: editFormData.value.name,
+                    phone: editFormData.value.phone,
+                    city: editFormData.value.city,
+                    email: editFormData.value.email,
+                    message: editFormData.value.message,
+                    notes: editFormData.value.notes,
+                    paymentId: editFormData.value.paymentId
+                }
+            })
+        });
 
+        const result = await response.json();
+        console.log(result);
+        
+        if (result.success) {
+            toast.add({
+                title: 'درخواست با موفقیت بروزرسانی شد',
+                color: 'success'
+            })
+            restModal()
+            loadRequests()
+        } else {
+            toast.add({
+                title: result.error || 'خطا در بروزرسانی',
+                color: 'error'
+            })
+        }
+    } catch (error) {
+        toast.add({
+            title: 'خطا در اتصال به سرور',
+            color: 'error'
+        })
+    } finally {
+        loading.value = false
+    }
+}
 // API Change Status
 const changeStatus = async (id: any, status: any) => {
     selectedStatus.value = null
@@ -576,7 +631,8 @@ function getRowItems(row: Row<MedicalRequest>) {
         {
             label: 'جزئیات درخواست',
             onSelect() {
-
+                 editFormData.value = { ...request,
+    }
                 openModal.value = {
                     open: true,
                     title: 'مشاهده و ویرایش جزئیات درخواست',
