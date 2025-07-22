@@ -1,6 +1,8 @@
 <template>
+    <UContainer>
     <div dir="rtl" class="flex justify-center items-center h-screen">
-        <UCard class="w-1/3 h-fit">
+        
+            <UCard class="w-full md:w-1/3 h-fit">
             <template #header>
                 <h1 class="text-lg text-center">ورود به پنل گزارشات ایزی مد</h1>
             </template>
@@ -19,6 +21,7 @@
             </template>
         </UCard>
     </div>
+    </UContainer>
 </template>
 
 <script setup lang="ts">

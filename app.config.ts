@@ -20,6 +20,11 @@ export default defineAppConfig({
         slots:{
             root:'rtl'
         }
+    },
+    table:{
+        slots:{
+            th:'rtl'
+        }
     }
   }
 })

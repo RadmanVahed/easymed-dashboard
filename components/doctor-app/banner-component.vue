@@ -3,7 +3,7 @@
         <UCard class="w-full">
             <template #header>
                 <div class="rtl">
-                    <h1>لیست بنر های اپ پزشک</h1>
+                    <h1 class="text-2xl font-bold">لیست بنر های اپ پزشک</h1>
                 </div>
             </template>
             <template #default>

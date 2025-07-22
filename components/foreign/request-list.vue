@@ -5,16 +5,21 @@
                 <div class="rtl">
                     <h1 class="text-2xl font-bold">لیست درخواست‌های درمانی</h1>
                 </div>
-                <UButton icon="i-lucide-refresh-cw" variant="outline" @click="loadRequests(filters.skip)"
+                <div class="flex gap-2">
+                    <UButton v-if="showList" icon="i-lucide-refresh-cw" variant="outline" @click="loadRequests()"
                     :loading="loading">
                     بروزرسانی
                 </UButton>
+                <UButton @click="showList = !showList">
+                    {{ showList ? 'مخفی کردن': 'نمایش لیست'}}
+                </UButton>
+                </div>
             </div>
         </template>
 
         <template #default>
             <!-- Filters Section -->
-            <div class="mb-6 p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+            <div v-if="showList" class="mb-6 p-4 border border-gray-200 rounded-lg dark:border-gray-700">
                 <h3 class="text-lg font-semibold mb-4 rtl">فیلترها</h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
@@ -48,8 +53,13 @@
                 </div>
             </div>
 
+
+            <div v-if="loading" class="mb-6 grid grid-cols-2 md:grid-cols-5 gap-4">
+
+                <USkeleton v-for="item in [1,2,3,4,5]" class="h-[76px]" />
+            </div>
             <!-- Stats Section -->
-            <div class="mb-6 grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div v-else  class="mb-6 grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div class="text-2xl font-bold text-blue-600">{{ stats.global.total }}</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400">کل درخواست‌ها</div>
@@ -77,12 +87,12 @@
             </div>
 
             <!-- Table Section -->
-            <div class="rtl">
+            <div v-if="showList" class="rtl">
                 <UTable dir="rtl" :data="data" :columns="columns" :loading="loading" class="flex-1" />
             </div>
 
             <!-- Pagination Section -->
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div v-if="showList" class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div class="text-sm text-gray-600 dark:text-gray-400 rtl">
                     نمایش {{ filters.skip + 1 }} تا {{ Math.min(filters.skip + filters.take, pagination.total) }} از {{
                         pagination.total }} درخواست
@@ -248,6 +258,7 @@ type ApiResponse = {
 // State Management
 const data = ref<MedicalRequest[]>([])
 const loading = ref(false)
+const showList = ref(false)
 const pagination = ref({
     total: 0,
     take: 5,
