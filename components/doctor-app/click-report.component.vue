@@ -1,11 +1,11 @@
 <template>
     <UCard>
         <template #header>
-            <div class="flex rtl justify-between items-center">
+            <div class="md:flex rtl justify-between items-center">
                 <div class="rtl">
                     <h1 class="text-2xl font-bold">لیست گزارش کلیک ها</h1>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex max-md:justify-end max-md:mt-4 gap-2">
                     <UButton v-if="showList" icon="i-lucide-refresh-cw" variant="outline" @click="fetchData()"
                         :loading="loading">
                         بروزرسانی
@@ -19,7 +19,7 @@
 
         <template #default>
 
-            <div v-if="Object.keys(clickData).length > 0 && !loading" class="grid grid-cols-4 rtl gap-4 mb-6">
+            <div v-if="Object.keys(clickData).length > 0 && !loading" class="grid grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 rtl gap-4 mb-6">
                 <UCard v-for="(value, key) in clickData" :key="key">
                     <template #header>
                         <h4 class="font-bold">{{ key }}</h4>

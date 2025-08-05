@@ -2,22 +2,35 @@
   <div class="flex w-full justify-end h-screen">
     <div class="w-full">
       <div class="flex w-full h-fit my-8">
-        <div class="flex gap-2 w-full">
-          <div class="ml-4">
+        <div class="flex gap-2 w-full mx-4">
+          <div>
             <ColorModeButton />
           </div>
           <USeparator icon="i-lucide-layout-dashboard" label="داشبورد ایزی مد" />
+          <USlideover :open="openMenu" title="منو دسترسی" :close="{ onClick: () => { openMenu = false } }"
+            close-icon="i-lucide-x" class="lg:hidden">
+            <UButton icon="i-lucide-align-justify" @click="openMenu = true" color="neutral" variant="outline" />
+
+            <template #body>
+              <div class="p-4">
+                <UNavigationMenu :ui="{ item: 'rtl' }" orientation="vertical" :items="items" />
+              </div>
+
+            </template>
+          </USlideover>
         </div>
+
       </div>
-      <MenuDashboardPanel v-if="selected == 'dashboard'" />
-      <MenuDoctorAppPanel v-if="selected == 'doctor-app'" />
-      <MenuPatientAppPanel v-if="selected == 'patient-app'" />
-      <MenuForeignPanel v-if="selected == 'foreign'" />
+      <UContainer>
+        <MenuDashboardPanel v-if="selected == 'dashboard'" />
+        <MenuDoctorAppPanel v-if="selected == 'doctor-app'" />
+        <MenuPatientAppPanel v-if="selected == 'patient-app'" />
+        <MenuForeignPanel v-if="selected == 'foreign'" />
+      </UContainer>
     </div>
-    <div>
+    <div class="max-lg:hidden">
       <div class="border-l p-4 py-20 h-screen" style="border-color: var(--ui-border);">
-        <UNavigationMenu :ui="{ item: 'rtl' }" orientation="vertical" :items="items"
-          class="data-[orientation=vertical]:w-48" />
+        <UNavigationMenu :ui="{ item: 'rtl' }" orientation="vertical" :items="items" />
       </div>
     </div>
   </div>
@@ -27,18 +40,16 @@
 import ColorModeButton from '@/components/base/ColorModeButton.vue';
 import type { NavigationMenuItem } from '@nuxt/ui';
 const selected = ref('dashboard')
+const openMenu = ref(false)
 const items = computed<NavigationMenuItem[][]>(() => [
   [
-    {
-      label: 'منو دسترسی',
-      type: 'label',
-    },
     {
       label: 'داشبورد',
       icon: 'i-lucide-layout-dashboard',
       active: selected.value === 'dashboard',
       onSelect() {
         selected.value = 'dashboard'
+        openMenu.value = false
       },
     },
     {
@@ -47,6 +58,7 @@ const items = computed<NavigationMenuItem[][]>(() => [
       active: selected.value === 'doctor-app',
       onSelect() {
         selected.value = 'doctor-app'
+        openMenu.value = false
       },
     },
     {
@@ -55,6 +67,7 @@ const items = computed<NavigationMenuItem[][]>(() => [
       active: selected.value === 'patient-app',
       onSelect() {
         selected.value = 'patient-app'
+        openMenu.value = false
       },
     },
     {
@@ -63,6 +76,7 @@ const items = computed<NavigationMenuItem[][]>(() => [
       active: selected.value === 'foreign',
       onSelect() {
         selected.value = 'foreign'
+        openMenu.value = false
       },
     },
     {
@@ -71,6 +85,7 @@ const items = computed<NavigationMenuItem[][]>(() => [
       active: selected.value === 'lab',
       onSelect() {
         selected.value = 'lab'
+        openMenu.value = false
       },
     },
   ],

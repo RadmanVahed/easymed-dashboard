@@ -8,8 +8,8 @@
             </template>
             <template #default>
                 <USkeleton v-if="loadingBanners" class="h-[267px] w-full rounded-md" />
-                <div v-else class="flex justify-between">
-                    <UCarousel v-slot="{ item }" dots :items="banners" class="w-full max-w-xs my-4 ml-8">
+                <div v-else class="flex max-md:flex-wrap justify-between">
+                    <UCarousel v-slot="{ item }" dots :items="banners" class="w-full max-w-xs my-4">
                         <div class="flex rtl justify-between">
                             <div>
                                 <h1 class="font-bold text-lg">{{ item.title }}</h1>
@@ -29,10 +29,10 @@
                         </div>
                         <img :src="item.base64Data" :loading="'lazy'" width="600" height="400" class="rounded-lg">
                     </UCarousel>
-                    <div class="rtl w-3/5">
+                    <div class="rtl max-md:w-full md:ml-4">
                         <div>
                             <h1>افزودن بنر جدید</h1>
-                            <div class="flex mt-8 w-full gap-1">
+                            <div class="md:flex grid mt-8 w-full gap-1">
                                 <UFormField class="w-full" label="انتخاب بنر">
                                     <input class="w-full border p-[5px] border-[var(--ui-border)] rounded-md" id="image"
                                         type="file" accept="image/*" @change="handleImageChange" ref="imageInput" />

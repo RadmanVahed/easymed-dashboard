@@ -1,11 +1,11 @@
 <template>
-    <UCard>
+    <UCard class="mb-8">
         <template #header>
-            <div class="flex rtl justify-between items-center">
+            <div class="md:flex rtl justify-between items-center">
                 <div class="rtl">
                     <h1 class="text-2xl font-bold">لیست درخواست‌های درمانی</h1>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex max-md:justify-end max-md:mt-4 gap-2">
                     <UButton v-if="showList" icon="i-lucide-refresh-cw" variant="outline" @click="loadRequests()"
                     :loading="loading">
                     بروزرسانی

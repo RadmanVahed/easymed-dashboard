@@ -68,7 +68,7 @@ onMounted(() => {
 
 const options = computed<ApexOptions>(() => ({
   chart: {
-    height: 390,
+    height: 200,
     type: 'radialBar',
     background: 'transparent'
   },
@@ -106,7 +106,7 @@ const options = computed<ApexOptions>(() => ({
   },
   // '#39539E', '#0077B5'
   colors: ['#1ab7ea', '#0084ff'],
-  labels: ['تعداد پزشکان', 'تعداد ورودهای امروز'],
+  labels: ['تعداد پزشکان', 'ورودهای امروز'],
   responsive: [{
     breakpoint: 480,
     options: {

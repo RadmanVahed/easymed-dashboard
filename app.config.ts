@@ -25,6 +25,11 @@ export default defineAppConfig({
         slots:{
             th:'rtl'
         }
+    },
+    slideover:{
+        slots:{
+            header:'rtl'
+        }
     }
   }
 })
