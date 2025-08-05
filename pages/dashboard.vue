@@ -11,6 +11,7 @@
       </div>
       <MenuDashboardPanel v-if="selected == 'dashboard'" />
       <MenuDoctorAppPanel v-if="selected == 'doctor-app'" />
+      <MenuPatientAppPanel v-if="selected == 'patient-app'" />
       <MenuForeignPanel v-if="selected == 'foreign'" />
     </div>
     <div>
@@ -25,8 +26,6 @@
 <script setup lang="ts">
 import ColorModeButton from '@/components/base/ColorModeButton.vue';
 import type { NavigationMenuItem } from '@nuxt/ui';
-import type { ApexOptions } from "apexcharts";
-import ApexCharts from 'apexcharts'
 const selected = ref('dashboard')
 const items = computed<NavigationMenuItem[][]>(() => [
   [
@@ -43,7 +42,7 @@ const items = computed<NavigationMenuItem[][]>(() => [
       },
     },
     {
-      label: 'اپ پزشک',
+      label: 'اپلیکیشن پزشک',
       icon: 'i-lucide-syringe',
       active: selected.value === 'doctor-app',
       onSelect() {
@@ -51,8 +50,16 @@ const items = computed<NavigationMenuItem[][]>(() => [
       },
     },
     {
+      label: 'اپلیکیشن بیمار',
+      icon: 'i-lucide-activity',
+      active: selected.value === 'patient-app',
+      onSelect() {
+        selected.value = 'patient-app'
+      },
+    },
+    {
       label: 'بیماران خارج از کشور',
-      icon: 'i-lucide-scan-heart',
+      icon: 'i-lucide-earth',
       active: selected.value === 'foreign',
       onSelect() {
         selected.value = 'foreign'
