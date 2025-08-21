@@ -6,7 +6,7 @@
           <div>
             <ColorModeButton />
           </div>
-          <USeparator icon="i-lucide-layout-dashboard" label="داشبورد ایزی مد" />
+          <USeparator icon="i-lucide-layout-dashboard" label="پنل ایزی مد" />
           <USlideover :open="openMenu" title="منو دسترسی" :close="{ onClick: () => { openMenu = false } }"
             close-icon="i-lucide-x" class="lg:hidden">
             <UButton icon="i-lucide-align-justify" @click="openMenu = true" color="neutral" variant="outline" />
@@ -26,6 +26,7 @@
         <MenuDoctorAppPanel v-if="selected == 'doctor-app'" />
         <MenuPatientAppPanel v-if="selected == 'patient-app'" />
         <MenuForeignPanel v-if="selected == 'foreign'" />
+        <MenuWheelPanel v-if="selected == 'wheel'" />
       </UContainer>
     </div>
     <div class="max-lg:hidden">
@@ -88,6 +89,15 @@ const items = computed<NavigationMenuItem[][]>(() => [
         openMenu.value = false
       },
     },
+    {
+      label:'گردونه شانس',
+      icon:'i-lucide-ferris-wheel',
+      active: selected.value === 'wheel',
+      onSelect() {
+        selected.value = 'wheel',
+        openMenu.value = false
+      }
+    }
   ],
   [
     {
