@@ -39,21 +39,26 @@ type userType = {
 }
 const UBadge = resolveComponent('UBadge')
 
-const API_BASE = 'https://easymed-doctor-app.radmanvahed.workers.dev'
+const API_BASE = 'https://intelligent-colden-d2cajkshs.liara.run/api/auth'
 
 const data = ref<userType[]>([])
 const loading = ref(false)
 
 const fetchData = async () => {
     loading.value = true
-    const response = await fetch(`${API_BASE}/registrations`, {
-        method: 'GET',
+    const response:any = await $fetch(`${API_BASE}/registers`, {
+        method: 'POST',
+        body:{
+            page:1,
+            limit:10,
+            filters:{}
+        }
     });
 
-    const result = await response.json();
+    const result = response;
     loading.value = false
     console.log(result);
-    data.value = result.data
+    data.value = result.data.registers
 
 }
 onMounted(() => {
@@ -61,28 +66,28 @@ onMounted(() => {
 })
 const columns: TableColumn<userType>[] = [
     {
-        accessorKey: 'firstName',
-        header: 'نام'
+        accessorKey: 'fullName',
+        header: 'نام و نام خانوادگی'
     },
     {
-        accessorKey: 'lastName',
-        header: 'نام خانوادگی'
-    },
-    {
-        accessorKey: 'nationalId',
+        accessorKey: 'nationalCode',
         header: 'کد ملی'
     },
     {
-        accessorKey: 'phoneNumber',
+        accessorKey: 'phone',
         header: 'شماره تماس'
+    },
+    {
+        accessorKey: 'medicalNumber',
+        header: 'نظام پزشکی'
     },
     {
         accessorKey: 'birthDate',
         header: 'تاریخ تولد',
     },
     {
-        accessorKey: 'registrationDate',
-        header: 'تاریخ ثبت درخواست'
+        accessorKey: 'createdAt',
+        header: 'تاریخ ثبت'
     },
     {
         accessorKey: 'status',
