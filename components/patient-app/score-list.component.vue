@@ -193,8 +193,6 @@ const fetchData = async (reset = true) => {
 
         const response = await fetch(`${API_BASE}/api/scores?${params.toString()}`)
         const result = await response.json()
-        console.log(result);
-
         if (result.success) {
             if (reset) {
                 data.value = result.data
