@@ -1,26 +1,20 @@
 <template>
-  <div class="space-y-6" dir="rtl" lang="fa">
+  <UCard>
     <!-- Header -->
-    <div class="flex justify-between items-center flex-wrap gap-3">
-      <h2 class="text-2xl font-bold">مدیریت گردونه‌ها</h2>
-      <UButton
-        icon="i-heroicons-plus"
-        color="primary"
-        @click="openModal()"
-      >
-        گردونه جدید
-      </UButton>
-    </div>
+    <template #header>
+      <div class="flex rtl justify-between items-center flex-wrap gap-3">
+        <h2 class="text-2xl font-bold">مدیریت گردونه‌ها</h2>
+        <UButton icon="i-heroicons-plus" color="primary" @click="openModal()">
+          گردونه جدید
+        </UButton>
+      </div>
+    </template>
 
     <!-- Wheel List -->
-    <div v-if="wheels.length" class="grid gap-4 md:grid-cols-2">
-      <UCard
-        v-for="wheel in wheels"
-        :key="wheel._id"
-        class="hover:shadow-lg transition"
-      >
+    <div v-if="wheels.length" class="grid rtl gap-4 md:grid-cols-1">
+      <UCard v-for="wheel in wheels" :key="wheel._id" class="hover:shadow-lg transition">
         <template #header>
-          <div class="flex justify-between items-center">
+          <div class="flex rtl justify-between items-center">
             <div class="flex items-center gap-3">
               <span class="text-2xl">🎰</span>
               <div>
@@ -35,9 +29,9 @@
                 </div>
               </div>
             </div>
-            <UDropdown :items="getWheelActions(wheel)">
+            <UDropdownMenu :items="getWheelActions(wheel)">
               <UButton icon="i-heroicons-ellipsis-vertical" color="gray" variant="ghost" />
-            </UDropdown>
+            </UDropdownMenu>
           </div>
         </template>
 
@@ -52,16 +46,43 @@
           <!-- Prizes -->
           <div v-if="wheel.prizes?.length">
             <h4 class="text-sm font-medium mb-2">جوایز:</h4>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div
-                v-for="prizeId in wheel.prizes"
-                :key="prizeId"
-                class="bg-gray-50 rounded-lg p-2 text-center dark:bg-gray-800"
-              >
-                <div>{{ getPrizeInfo(prizeId)?.icon }}</div>
-                <div class="text-xs">{{ getPrizeInfo(prizeId)?.name }}</div>
-                <div class="text-xs text-gray-500">{{ getPrizeInfo(prizeId)?.probability }}%</div>
-              </div>
+            <div class="grid grid-cols-2 gap-2">
+              <UCard v-for="prize in wheel.prizes" :key="prize._id" class="hover:shadow-lg transition-all duration-300">
+                <template #header>
+                  <div class="flex items-start justify-between">
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                      <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                          {{ prize.label }}
+                        </h3>
+                        <p class="text-sm text-gray-500">{{ prize.name }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <div class="space-y-4">
+                  <!-- Prize Stats -->
+                  <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span class="text-gray-500">موجودی:</span>
+                      <span class="font-medium mr-2">{{ prize.Inventory.count }}</span>
+                    </div>
+                    <div>
+                      <span class="text-gray-500">فروخته شده:</span>
+                      <span class="font-medium mr-2">{{ prize.sold.count }}</span>
+                    </div>
+                    <div>
+                      <span class="text-gray-500">احتمال:</span>
+                      <span class="font-medium mr-2">{{ prize.probability }}%</span>
+                    </div>
+                    <div>
+                      <span class="text-gray-500">حد مجاز:</span>
+                      <span class="font-medium mr-2">{{ prize.available }}</span>
+                    </div>
+                  </div>
+                </div>
+              </UCard>
             </div>
           </div>
         </div>
@@ -73,54 +94,48 @@
       گردونه‌ای یافت نشد
     </div>
 
-    <!-- Create/Edit Modal -->
-    <UModal v-model="isModalOpen" :ui="{ width: 'max-w-2xl' }">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">{{ editId ? 'ویرایش گردونه' : 'ایجاد گردونه' }}</h3>
-        </template>
 
-        <UForm :schema="wheelSchema" :state="form" @submit="handleSubmit" class="space-y-4">
-          <UFormGroup label="نام گردونه" name="name" required>
-            <UInput v-model="form.name" />
-          </UFormGroup>
+  </UCard>
+  <!-- Create/Edit Modal -->
+  <UModal :open="isModalOpen" :close="{ onClick: () => { isModalOpen = false } }" class="rtl"
+    :title="editId ? 'ویرایش گردونه' : 'ایجاد گردونه'" :ui="{ header: 'rtl', footer: 'justify-end' }">
+    <template #body>
+      <UForm :schema="wheelSchema" :state="form" @submit.prevent="handleSubmit()" class="space-y-4">
+        <UFormField label="نام گردونه" name="name" required>
+          <UInput class="w-full" v-model="form.name" />
+        </UFormField>
 
-          <UFormGroup label="نوع مشتری" name="costumer" required>
-            <USelect v-model="form.costumer" :options="customerOptions" />
-          </UFormGroup>
+        <UFormField label="نوع مشتری" name="costumer" required>
+          <USelect class="w-full" v-model="form.costumer" :items="customerOptions" />
+        </UFormField>
 
-          <UFormGroup label="جوایز" name="prizes" required>
-            <div class="max-h-56 overflow-y-auto border rounded-lg p-2 space-y-2">
-              <div
-                v-for="prize in availablePrizes"
-                :key="prize._id"
-                class="flex gap-3 items-center p-2 hover:bg-gray-50 rounded"
-              >
-                <UCheckbox
-                  :model-value="form.prizes.includes(prize._id)"
-                  @update:model-value="togglePrizeSelection(prize._id)"
-                />
-                <span>{{ getPrizeIcon(prize.type) }} {{ prize.name }} ({{ prize.probability }}%)</span>
-              </div>
-            </div>
-          </UFormGroup>
+        <UFormField label="جوایز" name="prizes" required>
+          <USelectMenu dir="rtl" v-model="form.prizes" :items="availablePrizes" multiple option-attribute="name"
+            value-attribute="_id" class="w-full">
+          </USelectMenu>
+        </UFormField>
 
-          <UFormGroup>
-            <UCheckbox v-model="form.available" label="فعال باشد" />
-          </UFormGroup>
+        <UFormField>
+          <UCheckbox v-model="form.available" label="فعال باشد" />
+        </UFormField>
 
-          <div class="flex justify-end gap-3">
-            <UButton type="submit" color="primary">{{ editId ? 'ذخیره تغییرات' : 'ایجاد' }}</UButton>
-            <UButton color="gray" variant="ghost" @click="isModalOpen = false">انصراف</UButton>
-          </div>
-        </UForm>
-      </UCard>
-    </UModal>
-  </div>
+        <div class="flex justify-end gap-3">
+          <UButton @click="handleSubmit()" type="submit" color="primary">{{ editId ? 'ذخیره تغییرات' : 'ایجاد' }}
+          </UButton>
+          <UButton color="neutral" variant="ghost" @click="isModalOpen = false">انصراف</UButton>
+        </div>
+      </UForm>
+    </template>
+  </UModal>
 </template>
 
 <script setup>
 import { z } from 'zod'
+function getProgressColor(ratio) {
+  if (ratio < 0.5) return 'success'
+  if (ratio < 0.8) return 'warning'
+  return 'error'
+}
 
 const props = defineProps({
   wheels: { type: Array, default: () => [] },

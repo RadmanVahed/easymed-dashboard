@@ -53,9 +53,11 @@
           <div class="space-y-2">
             <div class="flex justify-between text-xs text-gray-500">
               <span>پیشرفت فروش</span>
+              <span class="hidden"> {{ prize.percent = prize.sold.count / prize.Inventory.count * 100 }}</span>
               <span>{{ Math.round((prize.sold.count / prize.Inventory.count) * 100) }}%</span>
             </div>
-            <UProgress :value="(prize.sold.count / prize.Inventory.count) * 100"
+            <UProgress :max="100"  :animation="undefined"
+  v-model="prize.percent"
               :color="getProgressColor(prize.sold.count / prize.Inventory.count)" />
           </div>
 
@@ -63,7 +65,7 @@
           <div class="flex gap-2 pt-4 border-t dark:border-gray-700">
             <UButton icon="i-heroicons-plus-circle" size="sm" color="success" variant="soft"
               @click="showIncreaseInventoryModal(prize)">
-              افزایش موجودی
+              ویرایش موجودی
             </UButton>
             <UButton icon="i-heroicons-pencil-square" size="sm" color="info" variant="ghost"
               @click="showEditModal(prize)">
@@ -181,24 +183,24 @@
     <!-- Increase Inventory Modal -->
     <UModal :open="showInventoryModal"
       :close="{ onClick: () => { showInventoryModal = false; inventoryHistory = false } }" class="rtl"
-      title="افزایش موجودی جایزه" :ui="{ header: 'rtl', footer: 'justify-end' }">
+      title="ویرایش موجودی جایزه" :ui="{ header: 'rtl', footer: 'justify-end' }">
       <template #body>
         <div v-if="!inventoryHistory" class="flex justify-between">
           <div class="space-y-4">
-            <p class="text-gray-600">
+            <p>
               جایزه: <strong>{{ selectedPrize?.name }}</strong>
             </p>
-            <p class="text-gray-600">
+            <p>
               موجودی فعلی: <strong>{{ selectedPrize?.Inventory.count }}</strong>
             </p>
 
-            <UFormField label="مقدار افزایش" name="amount">
-              <UInput v-model.number="inventoryAmount" type="number" min="1" placeholder="تعداد افزایش موجودی" />
+            <UFormField label="مقدار افزایش یا کاهش" name="amount">
+              <UInput v-model.number="inventoryAmount" type="number" placeholder="تعداد افزایش یا کاهش موجودی" />
             </UFormField>
 
             <div class="flex gap-3 pt-4">
-              <UButton color="primary" @click="increaseInventory" :disabled="!inventoryAmount || inventoryAmount < 1">
-                افزایش موجودی
+              <UButton color="primary" @click="increaseInventory" :disabled="!inventoryAmount">
+                ویرایش موجودی
               </UButton>
               <UButton color="gray" variant="ghost" @click="{showInventoryModal = false; inventoryHistory= false}">
                 انصراف
@@ -215,7 +217,7 @@
             <div class="flex gap-1">
               <div>از {{ value.from }}</div>
               <div>به {{ value.to }}</div>
-              <div>در تاریخ {{ value.date }}</div>
+              <div>در تاریخ {{ moment(new Date(value.date).toISOString()).locale('fa').format('YYYY/MM/DD HH:mm') }}</div>
             </div>
           </div>
           <div class="mt-4">
@@ -230,6 +232,7 @@
 </template>
 
 <script setup>
+import moment from 'jalali-moment'
 import { z } from 'zod'
 
 const props = defineProps({
@@ -301,11 +304,10 @@ function getPrizeTypeLabel(type) {
 }
 
 function getProgressColor(ratio) {
-  if (ratio < 0.5) return 'green'
-  if (ratio < 0.8) return 'yellow'
-  return 'red'
+  if (ratio < 0.5) return 'success'
+  if (ratio < 0.8) return 'warning'
+  return 'error'
 }
-
 function showIncreaseInventoryModal(prize) {
   selectedPrize.value = prize
   inventoryAmount.value = 1
@@ -335,7 +337,7 @@ async function createPrize() {
 }
 
 async function increaseInventory() {
-  if (selectedPrize.value && inventoryAmount.value > 0) {
+  if (selectedPrize.value) {
     emit('increase-inventory', selectedPrize.value._id, inventoryAmount.value)
     showInventoryModal.value = false
   }

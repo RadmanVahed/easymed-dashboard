@@ -1,10 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Header with Search -->
-    <div class="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-        مدیریت پزشکان
-      </h2>
+    <div class="flex rtl flex-col md:flex-row gap-4 justify-between items-start md:items-center">
       <div class="flex gap-3 w-full md:w-auto">
         <UInput 
           v-model="searchTerm"
@@ -14,7 +11,7 @@
         />
         <UButton 
           icon="i-heroicons-plus-circle"
-          color="green"
+          color="success"
           @click="showBulkIncreaseModal = true"
         >
           افزایش گروهی
@@ -26,127 +23,30 @@
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold">لیست پزشکان ({{ filteredDoctors.length }})</h3>
-          <UBadge color="blue" variant="subtle">
+          <h3 class="text-lg font-semibold">لیست برندگان ({{ filteredDoctors.length }})</h3>
+          <UBadge color="info" variant="subtle">
             کل شانس‌های باقیمانده: {{ totalRemainingChances }}
           </UBadge>
         </div>
       </template>
 
       <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th class="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
-                اطلاعات پزشک
-              </th>
-              <th class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                شانس‌های باقیمانده
-              </th>
-              <th class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                تعداد جوایز
-              </th>
-              <th class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                آخرین فعالیت
-              </th>
-              <th class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                عملیات
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            <tr 
-              v-for="doctor in filteredDoctors" 
-              :key="doctor._id"
-              class="hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              <!-- Doctor Info -->
-              <td class="px-4 py-4">
-                <div class="flex items-center space-x-3 space-x-reverse">
-                  <div class="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
-                    <UIcon name="i-heroicons-user" class="text-blue-600 dark:text-blue-300" />
-                  </div>
-                  <div>
-                    <div class="font-medium text-gray-900 dark:text-white">
-                      {{ doctor.firstName }} {{ doctor.lastName }}
-                    </div>
-                    <div class="text-sm text-gray-500 space-y-1">
-                      <div>کد ملی: {{ doctor.nationalCode }}</div>
-                      <div>کد نظام: {{ doctor.medicalNumber }}</div>
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              <!-- Remaining Chances -->
-              <td class="px-4 py-4 text-center">
-                <UBadge 
-                  :color="getChancesColor(doctor.prizes.chances)"
-                  variant="subtle"
-                  size="lg"
-                >
-                  {{ doctor.prizes.chances }}
-                </UBadge>
-              </td>
-
-              <!-- Prize Count -->
-              <td class="px-4 py-4 text-center">
-                <div class="text-center">
-                  <div class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ doctor.prizes.histories?.length || 0 }}
-                  </div>
-                  <div class="text-xs text-gray-500">جایزه کسب شده</div>
-                </div>
-              </td>
-
-              <!-- Last Activity -->
-              <td class="px-4 py-4 text-center">
-                <div class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ getLastActivity(doctor) }}
-                </div>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-4 py-4 text-center">
-                <div class="flex justify-center gap-2">
-                  <UButton
-                    icon="i-heroicons-plus-circle"
-                    size="sm"
-                    color="green"
-                    variant="ghost"
-                    @click="showIncreaseModal(doctor)"
-                  >
-                    افزایش شانس
-                  </UButton>
-                  <UButton
-                    icon="i-heroicons-eye"
-                    size="sm"
-                    color="blue"
-                    variant="ghost"
-                    @click="showDoctorDetails(doctor)"
-                  >
-                    جزئیات
-                  </UButton>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
+        <UTable dir="rtl" :data="props.winners" :columns="columns" class="flex-1" />
         <!-- Empty State -->
         <div 
           v-if="filteredDoctors.length === 0"
           class="text-center py-8 text-gray-500"
         >
           <UIcon name="i-heroicons-user-group" class="text-4xl mb-2" />
-          <p>پزشکی با این شرایط یافت نشد</p>
+          <p>برنده یافت نشد</p>
         </div>
       </div>
     </UCard>
 
     <!-- Increase Chances Modal -->
     <UModal v-model="showIncreaseChancesModal">
-      <UCard>
+      <template #body>
+         <UCard>
         <template #header>
           <h3 class="text-xl font-semibold">افزایش شانس چرخش</h3>
         </template>
@@ -162,14 +62,14 @@
             </p>
           </div>
           
-          <UFormGroup label="مقدار افزایش" name="amount">
+          <UFormField label="مقدار افزایش" name="amount">
             <UInput 
               v-model.number="increaseAmount" 
               type="number"
               min="1"
               placeholder="تعداد شانس برای افزودن"
             />
-          </UFormGroup>
+          </UFormField>
 
           <div class="flex gap-3 pt-4">
             <UButton 
@@ -180,7 +80,7 @@
               افزایش شانس
             </UButton>
             <UButton 
-              color="gray" 
+              color="neutral" 
               variant="ghost"
               @click="showIncreaseChancesModal = false"
             >
@@ -189,17 +89,19 @@
           </div>
         </div>
       </UCard>
+      </template>
     </UModal>
 
     <!-- Bulk Increase Modal -->
     <UModal v-model="showBulkIncreaseModal">
-      <UCard>
+      <template #body>
+        <UCard>
         <template #header>
           <h3 class="text-xl font-semibold">افزایش گروهی شانس</h3>
         </template>
         
         <div class="space-y-4">
-          <UFormGroup label="انتخاب پزشکان" name="selectedDoctors">
+          <UFormField label="انتخاب پزشکان" name="selectedDoctors">
             <USelectMenu
               v-model="bulkSelectedDoctors"
               :options="doctorOptions"
@@ -208,16 +110,16 @@
               by="value"
               searchable
             />
-          </UFormGroup>
+          </UFormField>
           
-          <UFormGroup label="مقدار افزایش برای هر پزشک" name="bulkAmount">
+          <UFormField label="مقدار افزایش برای هر پزشک" name="bulkAmount">
             <UInput 
               v-model.number="bulkIncreaseAmount" 
               type="number"
               min="1"
               placeholder="تعداد شانس برای افزودن"
             />
-          </UFormGroup>
+          </UFormField>
 
           <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
             <p class="text-sm">
@@ -236,7 +138,7 @@
               افزایش گروهی
             </UButton>
             <UButton 
-              color="gray" 
+              color="neutral" 
               variant="ghost"
               @click="showBulkIncreaseModal = false"
             >
@@ -245,17 +147,19 @@
           </div>
         </div>
       </UCard>
+      </template>
     </UModal>
 
     <!-- Doctor Details Modal -->
-    <UModal v-model="showDetailsModal" :ui="{ width: 'max-w-4xl' }">
-      <UCard>
+    <UModal v-model="showDetailsModal" >
+      <template #body>
+        <UCard>
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-semibold">جزئیات پزشک</h3>
             <UButton
               icon="i-heroicons-x-mark"
-              color="gray"
+              color="neutral"
               variant="ghost"
               @click="showDetailsModal = false"
             />
@@ -310,18 +214,113 @@
           </div>
         </div>
       </UCard>
+      </template>
     </UModal>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
+import type { Row } from '@tanstack/vue-table'
+import moment from 'jalali-moment'
+const UButton = resolveComponent('UButton')
+const UBadge = resolveComponent('UBadge')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
+const UInput = resolveComponent('UInput')
+const USelect = resolveComponent('USelect')
+
 const props = defineProps({
-  doctors: {
-    type: Array,
+  winners: {
+    type: Array as PropType<WinnerType[]>,
     default: () => []
   }
 })
 
+type WinnerType = {
+  _id: string
+  prizeId: string
+  fullName: string
+  nationalCode: string
+  phone: string
+  prizeName: string
+  requestDate: string
+  receiveDate?: string
+  status?: string
+}
+
+// تعریف دقیق‌تر نوع ستون‌ها
+const columns = [
+  {
+    accessorKey: 'fullName',
+    header: 'نام و نام خانوادگی'
+  },
+  {
+    accessorKey: 'nationalCode',
+    header: 'کد ملی'
+  },
+  {
+    accessorKey: 'phone',
+    header: 'شماره تماس'
+  },
+  {
+    accessorKey: 'prizeName',
+    header: 'جایزه',
+  },
+  {
+    accessorKey: 'status',
+    header: 'وضعیت',
+    cell: ({ row }: { row: Row<WinnerType> }) => {
+      const status = row.original.receiveDate ? 'success' : 'warning'
+      return h(UBadge, {
+        class: 'capitalize',
+        variant: 'subtle',
+        color:status
+      }, () => status === 'success' ? 'انجام شده' : 'در انتظار')
+    }
+  },
+  {
+    accessorKey: 'requestDate',
+    header: 'تاریخ ثبت',
+    cell: ({ row }: { row: Row<WinnerType> }) => 
+      h('div', { class: 'text-sm' }, moment(row.original.requestDate).locale('fa').format('YYYY/MM/DD HH:mm'))
+  },
+  {
+    accessorKey: 'receiveDate',
+    header: 'تاریخ دریافت',
+    cell: ({ row }: { row: Row<WinnerType> }) => 
+      h('div', { class: 'text-sm' }, row.original.receiveDate ? moment(row.original.receiveDate).locale('fa').format('YYYY/MM/DD HH:mm') : '-')
+  },
+  {
+    id: 'actions',
+    header: 'عملیات',
+    cell: ({ row }: { row: Row<WinnerType> }) => {
+      return h(
+        'div',
+        { class: 'text-right' },
+        h(
+          UDropdownMenu,
+          {
+            content: {
+              align: 'end'
+            },
+            items: getRowItems(row),
+            'aria-label': 'Actions dropdown'
+          },
+          () =>
+            h(UButton, {
+              icon: 'i-lucide-ellipsis-vertical',
+              color: 'neutral',
+              variant: 'ghost',
+              class: 'ml-auto',
+              'aria-label': 'Actions dropdown'
+            })
+        )
+      )
+    }
+  }
+] as const satisfies TableColumn<WinnerType>[]
+
+// سایر قسمت‌های کد بدون تغییر
 const emit = defineEmits(['increase-chances'])
 
 // Reactive data
@@ -329,56 +328,71 @@ const searchTerm = ref('')
 const showIncreaseChancesModal = ref(false)
 const showBulkIncreaseModal = ref(false)
 const showDetailsModal = ref(false)
-const selectedDoctor = ref(null)
+const selectedDoctor: any = ref(null)
 const increaseAmount = ref(1)
 const bulkSelectedDoctors = ref([])
 const bulkIncreaseAmount = ref(1)
 
 // Computed
 const filteredDoctors = computed(() => {
-  if (!searchTerm.value) return props.doctors
+  if (!searchTerm.value) return props.winners
   
   const term = searchTerm.value.toLowerCase()
-  return props.doctors.filter(doctor => 
+  return props.winners.filter((doctor: any) => 
     `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(term) ||
     doctor.nationalCode.includes(term) ||
     doctor.medicalNumber.includes(term)
   )
 })
 
+function getRowItems(row: Row<WinnerType>) {
+  const request = row.original
+  return [
+    {
+      label: 'تغییر وضعیت',
+      onSelect() {
+        // عملیات تغییر وضعیت
+      }
+    }
+  ]
+}
+
 const totalRemainingChances = computed(() => {
-  return filteredDoctors.value.reduce((sum, doctor) => sum + (doctor.prizes.chances || 0), 0)
+  return filteredDoctors.value.reduce((sum, doctor: any) => sum + (doctor.prizes?.chances || 0), 0)
 })
 
 const doctorOptions = computed(() => {
-  return props.doctors.map(doctor => ({
+  return props.winners.map((doctor: any) => ({
     label: `${doctor.firstName} ${doctor.lastName} (${doctor.nationalCode})`,
     value: doctor.nationalCode
   }))
 })
 
 // Helper functions
-function getChancesColor(chances) {
-  if (chances === 0) return 'red'
-  if (chances <= 2) return 'yellow'
-  return 'green'
+function getChancesColor(chances: any) {
+  if (chances === 0) return 'error'
+  if (chances <= 2) return 'warning'
+  return 'success'
 }
-
-function getLastActivity(doctor) {
-  if (!doctor.prizes.histories?.length) return 'بدون فعالیت'
+onMounted(() => {
+  console.log(props.winners);
+  
+})
+function getLastActivity(doctor: any) {
+  if (!doctor.prizes?.histories?.length) return 'بدون فعالیت'
   
   const lastActivity = doctor.prizes.histories[doctor.prizes.histories.length - 1]
   return formatDate(lastActivity.requestDate)
 }
 
-function getLastPrizeDate(doctor) {
-  if (!doctor.prizes.histories?.length) return 'ندارد'
+function getLastPrizeDate(doctor: any) {
+  if (!doctor.prizes?.histories?.length) return 'ندارد'
   
   const lastPrize = doctor.prizes.histories[doctor.prizes.histories.length - 1]
   return formatDate(lastPrize.requestDate)
 }
 
-function formatDate(dateString) {
+function formatDate(dateString: any) {
   if (!dateString) return 'نامشخص'
   
   const date = new Date(dateString)
@@ -392,13 +406,13 @@ function formatDate(dateString) {
 }
 
 // Event handlers
-function showIncreaseModal(doctor) {
+function showIncreaseModal(doctor: any) {
   selectedDoctor.value = doctor
   increaseAmount.value = 1
   showIncreaseChancesModal.value = true
 }
 
-function showDoctorDetails(doctor) {
+function showDoctorDetails(doctor: any) {
   selectedDoctor.value = doctor
   showDetailsModal.value = true
 }

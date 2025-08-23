@@ -18,7 +18,7 @@
               <UIcon name="i-heroicons-gift" class="text-2xl text-purple-500" />
             </div>
           </template>
-          <div class="text-3xl font-bold text-purple-600">{{ stats.totalPrizes }}</div>
+          <div class="text-3xl font-bold text-purple-600">{{ prizes.length }}</div>
           <p class="text-sm text-gray-500 mt-2">جایزه فعال</p>
         </UCard>
 
@@ -29,7 +29,7 @@
               <UIcon name="i-heroicons-cog-6-tooth" class="text-2xl text-green-500" />
             </div>
           </template>
-          <div class="text-3xl font-bold text-green-600">{{ stats.activeWheels }}</div>
+          <div class="text-3xl font-bold text-green-600">{{ wheels.length }}</div>
           <p class="text-sm text-gray-500 mt-2">در حال اجرا</p>
         </UCard>
 
@@ -53,7 +53,6 @@
             :prizes="prizes" 
             @create="handleCreatePrize"
             @update="handleUpdatePrize"
-            @delete="handleDeletePrize"
             @increase-inventory="handleIncreaseInventory"
           />
         </template>
@@ -65,14 +64,13 @@
             :prizes="prizes"
             @create="handleCreateWheel"
             @update="handleUpdateWheel"
-            @delete="handleDeleteWheel"
           />
         </template>
 
         <!-- Doctors Tab -->
         <template #doctors>
           <WheelDoctorsTab 
-            :doctors="doctors"
+            :winners="doctors"
             @increase-chances="handleIncreaseChances"
           />
         </template>
@@ -148,15 +146,12 @@ async function loadWheels() {
 
 async function loadDoctors() {
   try {
-    const { data } = await $fetch('https://intelligent-colden-d2cajkshs.liara.run/api/auth/doctors' , {
+    const { data } = await $fetch('https://intelligent-colden-d2cajkshs.liara.run/api/wheel/winners' , {
       method:'POST',
-      body:{
-        page:1,
-        limit:10,
-        filters:{}
-      }
+      body:{}
     })
-    doctors.value = data.doctors || []
+    doctors.value = data.winners
+     console.log(doctors.value);
   } catch (error) {
     console.error('Error loading doctors:', error)
   }
@@ -167,7 +162,7 @@ async function loadStats() {
   stats.value = {
     totalPrizes: prizes.value.length,
     activeWheels: wheels.value.filter(w => w.available).length,
-    activeDoctors: doctors.value.filter(d => d.prizes.chances > 0).length
+    activeDoctors: doctors.value.length
   }
 }
 
