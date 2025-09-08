@@ -26,6 +26,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function initializeStore() {
+    token.value = localStorage.getItem('auth-token')
+  }
+
+
   function tryToLoadAuthDataFromLocalStorage() {
     if (typeof window !== 'undefined') {
       const savedToken = localStorage.getItem('auth-token');
@@ -53,5 +58,6 @@ export const useAuthStore = defineStore('auth', () => {
     setLoginData,
     logout,
     tryToLoadAuthDataFromLocalStorage,
+    initializeStore
   };
 });

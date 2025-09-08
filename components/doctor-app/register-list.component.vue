@@ -120,7 +120,7 @@ const apiBaseUrl = config.public.apiBaseUrl;
 // این هوک به صورت خودکار داده‌ها را واکشی و مدیریت می‌کند
 const { data, status, refresh } = await useAsyncData<ApiResponse>(
     'registers-list', // یک کلید منحصر به فرد برای کش کردن
-    () => $fetch(apiBaseUrl + 'auth/registers', { // استفاده از $fetch در useAsyncData
+     () => useApiFetch('auth/registers',{ // این تابع حالا یک Promise از داده‌های خالص برمی‌گرداند
         method: 'POST',
         body: {
             page: filters.page,
@@ -225,19 +225,20 @@ async function handleChangeStatus() {
     
     isSubmitting.value = true;
     try {
-        const response: any = await useApiFetch(`auth/register/${selectedRegister.value._id}/${selectedStatus.value}`, {
-            method: 'PUT'
-        });
+        const response = await useApiFetch<{ success: boolean; message: string; statusCode?: number }>(`auth/register/${selectedRegister.value._id}/${selectedStatus.value}`, {
+    method: 'PUT'
+});
 
-        if (response.data.value?.success || response.data.value?.statusCode === 200) {
-            toast.add({
-                title: 'موفقیت',
-                description: response.data.value.message || 'وضعیت با موفقیت تغییر کرد.',
-                color: 'success'
-            });
-            isModalOpen.value = false;
-            await refresh();
-        }
+// ✅ شرط صحیح
+if (response?.success || response?.statusCode === 200) {
+    toast.add({
+        title: 'موفقیت',
+        description: response.message || 'وضعیت با موفقیت تغییر کرد.',
+        color: 'success'
+    });
+    isModalOpen.value = false;
+    await refresh(); // لیست را مجدداً بارگذاری کن
+}
     } finally {
         isSubmitting.value = false;
     }

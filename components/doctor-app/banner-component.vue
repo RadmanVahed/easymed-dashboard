@@ -122,8 +122,8 @@
     const { data: banners, pending, error, refresh: refreshBanners } = useAsyncData<Banner[]>(
         'fetchBanners',
         async () => {
-            const response:any = await useApiFetch(apiBaseUrl + 'banner/banners/doctor');
-            return response.data.value.banners || [];
+            const response:any = await useApiFetch('banner/banners/doctor');
+            return response.banners || [];
         }, {
         default: () => [],
     }

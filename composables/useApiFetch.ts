@@ -1,11 +1,15 @@
-import type { UseFetchOptions } from 'nuxt/app';
+// composables/useApiFetch.ts
+
+// ✨ 1. این تایپ را از ofetch ایمپورت کنید
+import type { FetchOptions } from 'ofetch';
 import { defu } from 'defu';
 import { useAuthStore } from '@/stores/auth';
 import { useNotificationStore } from '@/stores/notification';
 
 export function useApiFetch<T>(
   url: string,
-  options: UseFetchOptions<T> = {}
+  // ✨ 2. اینجا از FetchOptions به جای UseFetchOptions استفاده کنید
+  options: FetchOptions = {}
 ) {
   const authStore = useAuthStore();
   const notificationStore = useNotificationStore();
@@ -14,11 +18,13 @@ export function useApiFetch<T>(
 
   const apiBaseUrl = config.public.apiBaseUrl;
 
-  const defaults: UseFetchOptions<T> = {
+  // ✨ 3. نوع defaults را هم به FetchOptions تغییر دهید
+  const defaults: FetchOptions = {
     baseURL: apiBaseUrl,
-    key: options.method === 'GET' || !options.method ? url : undefined,
 
     onRequest({ options }) {
+      console.log(authStore.token);
+      
       if (authStore.token) {
         options.headers = new Headers(options.headers);
         options.headers.set('Authorization', `Bearer ${authStore.token}`);
@@ -53,5 +59,6 @@ export function useApiFetch<T>(
 
   const params = defu(options, defaults);
 
-  return useFetch(url, params)
+  return $fetch<T>(url, params as unknown as Record<string, unknown>);
+
 }
