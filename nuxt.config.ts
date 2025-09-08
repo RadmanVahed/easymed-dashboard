@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: false },
-  modules: ['@nuxt/ui', '@nuxt/icon'],
+  modules: ['@nuxt/ui', '@nuxt/icon' , '@pinia/nuxt'],
   css:['./assets/css/style.css'],
    ssr: false,
    app: {
@@ -13,5 +13,10 @@ export default defineNuxtConfig({
     prerender: {
       routes: ['/']
     }
-  }
+  },
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: 'https://intelligent-colden-d2cajkshs.liara.run/api/'
+    }
+  },
 })

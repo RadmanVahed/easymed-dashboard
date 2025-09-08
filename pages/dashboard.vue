@@ -7,7 +7,7 @@
             <ColorModeButton />
           </div>
           <USeparator icon="i-lucide-layout-dashboard" label="پنل ایزی مد" />
-          <USlideover :open="openMenu" title="منو دسترسی" :close="{ onClick: () => { openMenu = false } }"
+          <USlideover description="سرویس مورد نظر را انتخاب کنید" :open="openMenu" title="منوی پنل" :close="{ onClick: () => { openMenu = false } }"
             close-icon="i-lucide-x" class="lg:hidden">
             <UButton icon="i-lucide-align-justify" @click="openMenu = true" color="neutral" variant="outline" />
 
@@ -103,6 +103,9 @@ const items = computed<NavigationMenuItem[][]>(() => [
     {
       label: 'خروج از حساب کاربری',
       icon: 'i-lucide-user',
+      onSelect() {
+        useAuthStore().logout()
+      },
       to: '/',
     },
   ]

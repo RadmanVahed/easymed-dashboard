@@ -1,263 +1,217 @@
-<template>
-    <div class="flex">
-        <UCard class="w-full">
-            <template #header>
-                <div class="rtl">
-                    <h1 class="text-2xl font-bold">لیست بنر های اپ پزشک</h1>
-                </div>
-            </template>
-            <template #default>
-                <USkeleton v-if="loadingBanners" class="h-[267px] w-full rounded-md" />
-                <div v-else class="flex max-md:flex-wrap justify-between">
-                    <UCarousel v-slot="{ item }" dots :items="banners" class="w-full max-w-xs my-4">
-                        <div class="flex rtl justify-between">
-                            <div>
-                                <h1 class="font-bold text-lg">{{ item.name }}</h1>
-                                <div>{{ formatDate(item.createdAt) }}</div>
-                                <div class="text-sm text-gray-500">{{ item.key }}</div>
+    <template>
+        <div class="flex">
+            <UCard class="w-full">
+                <template #header>
+                    <div class="rtl flex justify-between">
+                        <h1 class="text-2xl font-bold">سرویس بنر</h1>
+                        <UButton @click="isNewBannerModal = true" label="افزودن بنر" />
+                    </div>
+                </template>
+
+                <template #default>
+                    <USkeleton v-if="pending" class="h-[267px] w-full rounded-md" />
+
+                    <div v-else-if="error" class="rtl text-center text-red-500">
+                        <p>خطا در دریافت بنرها. لطفا دوباره تلاش کنید.</p>
+                        <UButton icon="i-heroicons-arrow-path" class="mt-4" @click="refreshBanners()">
+                            تلاش مجدد
+                        </UButton>
+                    </div>
+
+                    <div v-else class="flex max-md:flex-wrap justify-between">
+                        <UCarousel v-slot="{ item }" dots :items="banners" :ui="{ item: 'basis-full' }"
+                            class="w-full max-w-xs my-4">
+                            <div class="flex rtl justify-between">
+                                <div>
+                                    <h1 class="font-bold text-lg">{{ item.name }}</h1>
+                                    <div>{{ useFormatDate(item.createdAt , 'mix') }}</div>
+                                    <div class="text-sm text-gray-500">{{ item.key }}</div>
+                                </div>
+                                <div>
+                                    <UButton color="error" size="sm" @click="openDeleteModal(item._id)" class="mt-2">
+                                        حذف
+                                    </UButton>
+                                </div>
                             </div>
-                            <div>
-                                <UModal v-model:open="showDeleteModal" class="rtl" title="آیا از حذف بنر اطمینان دارید؟"
-                                    :ui="{ header: 'rtl', footer: 'justify-end' }">
-                                    <template #footer>
-                                        <UButton label="لغو" color="neutral" variant="outline" @click="showDeleteModal = false" />
-                                        <UButton color="error" @click="deleteBanner(selectedBannerId)">تایید</UButton>
-                                    </template>
-                                </UModal>
-                                <UButton 
-                                    color="error" 
-                                    size="sm" 
-                                    @click="openDeleteModal(item._id)"
-                                    class="mt-2"
-                                >
-                                    حذف
-                                </UButton>
-                            </div>
-                        </div>
-                        <img :src="`${API_BASE}/${item.path}`" :loading="'lazy'" width="600" height="400" class="rounded-lg">
-                    </UCarousel>
-                    <div class="rtl max-md:w-full md:ml-4">
-                        <div>
-                            <h1>افزودن بنر جدید</h1>
-                            <div class="md:flex grid mt-8 w-full gap-1">
-                                <UFormField class="w-full" label="انتخاب بنر">
-                                    <input 
-                                        class="w-full border p-[5px] border-[var(--ui-border)] rounded-md" 
-                                        id="image"
-                                        type="file" 
-                                        accept="image/*" 
-                                        @change="handleImageChange" 
-                                        ref="imageInput" 
-                                    />
-                                </UFormField>
-                                <UFormField class="w-full" label="نام بنر">
-                                    <UInput class="w-full" v-model="form.name" placeholder="نام بنر" />
-                                </UFormField>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 mt-4">
-                                <UFormField label="کلید بنر">
-                                    <UInput class="w-full" v-model="form.key" placeholder="کلید منحصر به فرد" />
-                                </UFormField>
-                                <UFormField label="پلتفرم">
-                                    <USelect 
-                                        v-model="form.platform" 
-                                        :items="platformOptions"
-                                        option-attribute="label"
-                                        value-attribute="value"
-                                    />
-                                </UFormField>
-                            </div>
-                            <UFormField label="نوع عمل" class="mt-4">
-                                <USelect 
-                                    v-model="form.action" 
-                                    :items="actionOptions"
-                                    option-attribute="label"
-                                    value-attribute="value"
-                                />
-                            </UFormField>
-                            <UButton class="mt-4" :disabled="loading" :loading="loading" @click="submitBanner()" block>
-                                ذخیره بنر
-                            </UButton>
+                            <img :src="`${apiBaseUrl.replace('api/', '')}${item.path}`" :loading="'lazy'" width="600" height="400"
+                                class="rounded-lg mt-2">
+                        </UCarousel>
+
+                        <div class="rtl max-md:w-full md:ml-4">
+
                         </div>
                     </div>
-                </div>
-            </template>
-        </UCard>
-    </div>
-</template>
+                </template>
+            </UCard>
+            <UModal v-model:open="isNewBannerModal" description="اطلاعات بنر را وارد کنید" title="افزودن بنر جدید"
+                class="rtl" :ui="{ header: 'rtl', footer: 'justify-end' }">
+                <template #body>
+                    <div class="grid w-full gap-4">
+                        <UFormField class="w-full" label="انتخاب بنر" 
+                            name="image" required>
+                            <UFileUpload 
+                                v-model="selectedFile" 
+                                :multiple="false"
+                                accept="image/*"
+                                :max-size="2 * 1024 * 1024"
+                                label="تصویر را اینجا بکشید یا کلیک کنید"
+                                description="فرمت‌های مجاز: SVG, PNG, JPG"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField class="w-full" label="نام بنر" name="name" required>
+                            <UInput class="w-full" v-model="form.name" placeholder="نام بنر" />
+                        </UFormField>
+                    </div>
+                    <div class="grid grid-cols-2 w-full gap-2 mt-4">
+                        <UFormField label="نوع عمل" name="action" class="w-full">
+                            <USelect class="w-full" v-model="form.action" :items="actionOptions" option-attribute="label"
+                                value-attribute="value" />
+                        </UFormField>
 
-<script setup lang="ts">
-interface Banner {
-    _id: string
-    name: string
-    key: string
-    action: string
-    path: string
-    platform: string
-    createdAt: string
-}
+                        <UFormField class="w-full" label="پلتفرم" name="platform">
+                            <USelect class="w-full" v-model="form.platform" :items="platformOptions"
+                                option-attribute="label" value-attribute="value" />
+                        </UFormField>
+                    </div>
+                    <UFormField class="w-full mt-4" label="کلید بنر" name="key" required>
+                        <UInput class="w-full" v-model="form.key" placeholder="کلید منحصر به فرد" />
+                    </UFormField>
+                    <UButton class="mt-4" :loading="isSubmitting" @click="submitBanner" block>
+                        ذخیره بنر
+                    </UButton>
+                </template>
+            </UModal>
+            <UModal v-model:open="isDeleteModalOpen" description="آیا از حذف بنر اطمینان دارید؟" title="حذف بنر" class="rtl"
+                :ui="{ header: 'rtl', footer: 'justify-end' }">
+                <template #body>
+                    <div class="flex gap-2">
+                        <UButton label="لغو" color="neutral" variant="outline" @click="isDeleteModalOpen = false" />
+                        <UButton color="error" :loading="isDeleting" @click="confirmDeleteBanner">تایید و حذف</UButton>
+                    </div>
+                </template>
+            </UModal>
+        </div>
+    </template>
 
-interface BannerForm {
-    name: string
-    key: string
-    action: string
-    platform: string
-}
+    <script setup lang="ts">
+    import { useApiFetch } from '@/composables/useApiFetch';
+    import type { UInput } from '#build/components';
+    import { useFormatDate } from '~/composables/useFormatDate';
 
-const API_BASE = 'https://intelligent-colden-d2cajkshs.liara.run'
-
-// Reactive data
-const form = reactive<BannerForm>({
-    name: '',
-    key: '',
-    action: 'image',
-    platform: 'doctor'
-})
-
-const loading = ref(false)
-const loadingBanners = ref(false)
-const banners = ref<Banner[]>([])
-const showDeleteModal = ref(false)
-const selectedBannerId = ref('')
-const toast = useToast()
-const imageInput: any = ref(null)
-const selectedFile = ref<File | null>(null)
-
-// گزینه‌های پلتفرم و اکشن
-const platformOptions = ref([
-    { label: 'اپ پزشک', value: 'doctor' },
-    { label: 'اپ بیمار', value: 'patient' },
-    { label: 'دشبورد', value: 'dashboard' },
-    { label: 'اپ ایزیمد', value: 'easymed' }
-])
-
-const actionOptions = ref([
-    { label: 'تصویر', value: 'image' },
-    { label: 'لینک', value: 'url' },
-    { label: 'مسیر', value: 'path' },
-    { label: 'چرخ ویل', value: 'wheel' }
-])
-
-// مدیریت تغییر فایل
-const handleImageChange = (event: any) => {
-    const file = event.target.files[0]
-    if (file) {
-        selectedFile.value = file
-    } else {
-        selectedFile.value = null
-    }
-}
-
-// ارسال فرم با FormData
-const submitBanner = async () => {
-    if (!selectedFile.value) {
-        toast.add({
-            title: 'لطفا فایل تصویر رو انتخاب کنید',
-            color: 'warning'
-        })
-        return
+    interface Banner {
+        _id: string;
+        name: string;
+        key: string;
+        action: string;
+        path: string;
+        platform: string;
+        createdAt: string;
     }
 
-    if (!form.name || !form.key) {
-        toast.add({
-            title: 'لطفا تمام فیلدهای اجباری را پر کنید',
-            color: 'warning'
-        })
-        return
+    interface BannerForm {
+        name: string;
+        key: string;
+        action: string;
+        platform: string;
     }
+    const toast = useToast();
+    const config = useRuntimeConfig();
+    const apiBaseUrl = config.public.apiBaseUrl;
 
-    loading.value = true
-
-    try {
-        const formData = new FormData()
-        formData.append('path', selectedFile.value)
-        formData.append('name', form.name)
-        formData.append('key', form.key)
-        formData.append('action', form.action)
-        formData.append('platform', form.platform)
-
-        const response: any = await $fetch(`${API_BASE}/api/banner/banners`, {
-            method: 'POST',
-            body: formData,
-        })
-
-        toast.add({
-            title: 'بنر با موفقیت ذخیره شد',
-            color: 'success'
-        })
-        resetForm()
-        await fetchBanners()
-    } catch (error: any) {
-        console.error('Error:', error)
-        toast.add({
-            title: error.data?.message || 'خطا در ذخیره بنر',
-            color: 'error'
-        })
-    } finally {
-        loading.value = false
+    const { data: banners, pending, error, refresh: refreshBanners } = useAsyncData<Banner[]>(
+        'fetchBanners',
+        async () => {
+            const response:any = await useApiFetch(apiBaseUrl + 'banner/banners/doctor');
+            return response.data.value.banners || [];
+        }, {
+        default: () => [],
     }
-}
+    );
+    const initialFormState: BannerForm = { name: '', key: '', action: 'image', platform: 'doctor' };
+    const form = reactive({ ...initialFormState });
+    const selectedFile = ref<File | null>(null);
+    const imageInputRef = ref<any | null>(null);
+    const isSubmitting = ref(false);
+    const isNewBannerModal = ref(false);
 
-const resetForm = () => {
-    form.name = ''
-    form.key = ''
-    form.action = 'image'
-    form.platform = 'doctor'
-    selectedFile.value = null
-    if (imageInput.value) {
-        imageInput.value.value = ''
-    }
-}
+    const platformOptions = [
+        { label: 'اپ پزشک', value: 'doctor' },
+        { label: 'اپ بیمار', value: 'patient' },
+        { label: 'داشبورد', value: 'dashboard' },
+        { label: 'سامانه ایزی مد', value: 'easymed' }
+    ];
+    const actionOptions = [
+        { label: 'تصویر', value: 'image' },
+        { label: 'لینک', value: 'url' },
+        { label: 'مسیر', value: 'path' },
+        { label: 'گردونه شانس', value: 'wheel' }
+    ];
 
-const fetchBanners = async () => {
-    loadingBanners.value = true
+    const resetForm = () => {
+        Object.assign(form, initialFormState);
+          selectedFile.value = null; 
+    };
 
-    try {
-        const response: any = await $fetch(`${API_BASE}/api/banner/banners/doctor`)
-        banners.value = response.banners || []
-    } catch (error: any) {
-        console.error('Fetch banners error:', error)
-        toast.add({
-            title: 'خطا در دریافت بنر ها',
-            color: 'error'
-        })
-        banners.value = []
-    } finally {
-        loadingBanners.value = false
-    }
-}
+    const submitBanner = async () => {
+     const fileToUpload = selectedFile.value;
+        
+        if (!fileToUpload || !form.name || !form.key) {
+            toast.add({ title: 'لطفا تمام فیلدهای الزامی را پر کنید', color: 'warning', icon: 'i-heroicons-exclamation-triangle' });
+            return;
+        }
 
-const openDeleteModal = (id: string) => {
-    selectedBannerId.value = id
-    showDeleteModal.value = true
-}
+        isSubmitting.value = true;
+        const formData = new FormData();
+        formData.append('path', fileToUpload);
+        formData.append('name', form.name);
+        formData.append('key', form.key);
+        formData.append('action', form.action);
+        formData.append('platform', form.platform);
 
-const deleteBanner = async (id: string) => {
-    try {
-        await $fetch(`${API_BASE}/api/banner/banners/${id}`, {
-            method: 'DELETE'
-        })
+        try {
+            await useApiFetch('banner/banners', {
+                method: 'POST',
+                body: formData,
+            });
 
-        showDeleteModal.value = false
-        toast.add({
-            title: 'بنر با موفقیت حذف شد',
-            color: 'success'
-        })
-        await fetchBanners()
-    } catch (error: any) {
-        console.error('Delete error:', error)
-        toast.add({
-            title: error.data?.message || 'خطا در حذف بنر',
-            color: 'error'
-        })
-    }
-}
+            toast.add({ title: 'بنر با موفقیت ذخیره شد', color: 'success' });
+            isNewBannerModal.value = false;
+            resetForm();
+            await refreshBanners();
+        } catch (err: any) {
+            console.error('Submit banner error:', err);
+        } finally {
+            isSubmitting.value = false;
+        }
+    };
 
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('fa-IR')
-}
+    const isDeleteModalOpen = ref(false);
+    const isDeleting = ref(false);
+    const selectedBannerId = ref<string | null>(null);
 
-onMounted(() => {
-    fetchBanners()
-})
-</script>
+    const openDeleteModal = (id: string) => {
+        selectedBannerId.value = id;
+        isDeleteModalOpen.value = true;
+    };
+
+    const confirmDeleteBanner = async () => {
+        if (!selectedBannerId.value) return;
+
+        isDeleting.value = true;
+        try {
+            await useApiFetch(`banner/banners/${selectedBannerId.value}`, {
+                method: 'DELETE',
+            });
+            toast.add({ title: 'بنر با موفقیت حذف شد', color: 'success' });
+            isDeleteModalOpen.value = false;
+            await refreshBanners();
+        } catch (err: any) {
+            console.error('Delete error:', err);
+        } finally {
+            isDeleting.value = false;
+            selectedBannerId.value = null;
+        }
+    };
+
+    </script>

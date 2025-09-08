@@ -2,160 +2,169 @@
     <UCard>
         <template #header>
             <div class="flex rtl justify-between items-center">
-                <div class="rtl">
-                    <h1 class="text-2xl font-bold">لیست ثبت نام پزشکان</h1>
-                </div>
-                <!-- <UButton icon="i-lucide-refresh-cw" variant="outline" @click="loadRequests(filters.skip)"
-                    :loading="loading">
+                <h1 class="text-2xl font-bold">لیست ثبت نام پزشکان</h1>
+                <!-- دکمه رفرش به status و تابع refresh از useAsyncData متصل است -->
+                <UButton 
+                    icon="i-heroicons-arrow-path" 
+                    variant="outline" 
+                    @click="refresh()"
+                    :loading="status === 'pending'">
                     بروزرسانی
-                </UButton> -->
+                </UButton>
             </div>
         </template>
+        <!-- بخش جدول -->
+        <!-- :rows به data.registers و loading به status متصل است -->
+        <UTable 
+            :data="data.registers" 
+            :loading="status === 'pending'" 
+            :columns="columns" 
+            class="rtl"
+        >   
+            <!-- نمایش پیام مناسب وقتی داده‌ای وجود ندارد -->
+            <template #empty>
+                <div class="flex flex-col items-center justify-center py-6 gap-3">
+                    <UIcon name="i-heroicons-circle-stack-20-solid" class="w-10 h-10 mx-auto text-gray-400" />
+                    <span class="text-sm">هیچ ثبت‌نامی یافت نشد.</span>
+                </div>
+            </template>
+        </UTable>
 
-        <template #default>
-            <!-- Table Section -->
-            <div class="rtl">
-                <UTable :data="data" :loading="loading" :columns="columns" class="flex-1 rtl" />
+        <!-- بخش صفحه‌بندی -->
+        <template #footer>
+            <div class="flex justify-between items-center rtl">
+                <div>
+                    <span class="text-sm text-gray-500">
+                        نمایش {{ (filters.page - 1) * filters.take + 1 }} تا {{ Math.min(filters.page * filters.take, data?.pagination.totalCount || 0) }} از {{ data?.pagination.totalCount }} مورد
+                    </span>
+                </div>
+                {{ data.pagination.totalPages }}
+                <!-- اتصال UPagination به state و total از API -->
+                <UPagination
+                    :page-count="filters.take"
+                    :total="data.pagination.totalCount || 0"
+                    v-model:page="filters.page"
+                    show-edges :sibling-count="1" 
+                >
+            </UPagination>
             </div>
-
-            <!-- Pagination Section -->
         </template>
     </UCard>
-     <UModal :open="openModal.open" :close="{ onClick: () => { openModal.open = false } }" class="rtl"
-        :title="openModal.title" :ui="{ header: 'rtl', footer: 'justify-end' }">
-        <template #body>
-            <div v-if="openModal.key == 'change-status'">
-                <UFormField label="وضعیت جدید را انتخاب کنید">
-                    <USelect class="w-full" v-model="selectedStatus" :items="statusOptionsChange"></USelect>
-                    <UButton :loading="loading" class="my-2" block
-                        @click="changeStatus(openModal.data ? openModal.data._id : '', selectedStatus)">ذخیره
-                    </UButton>
-                </UFormField>
-            </div>
-        </template>
+
+    <!-- مدال برای تغییر وضعیت -->
+    <UModal title="تغییر وضعیت" description="وضعیت جدید را انتخاب کنید" v-model:open="isModalOpen" >
+      <template #body>
+                <USelect class="w-full mb-4" v-model="selectedStatus" :items="statusOptionsChange" option-attribute="label" value-attribute="value" />
+            <UButton 
+                :loading="isSubmitting" 
+                @click="handleChangeStatus" 
+                block
+            >
+                ذخیره تغییرات
+            </UButton>
+      </template>
     </UModal>
 </template>
 
 <script setup lang="ts">
-import { h, resolveComponent } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Row } from '@tanstack/vue-table'
-type userType = {
-    _id: string
-    birthDate: string
-    status: string
-    firstName: string
-    lastName: string
-    fullname: string
-    medicalNumber: string
-    nationalCode: string
-    phone: string
-    createdAt: string,
-    referralCode: string
-}
-const UBadge = resolveComponent('UBadge')
+import type { TableColumn } from '#ui/types';
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UButton = resolveComponent('UButton')
+const UBadge = resolveComponent('UBadge')
+// --- تعریف تایپ‌ها ---
+// تعریف تایپ دقیق برای پاسخ API
+interface Register {
+    _id: string;
+    birthDate: string;
+    status: 'pending' | 'done' | 'reject';
+    firstName: string;
+    lastName:string;
+    fullName: string;
+    medicalNumber: string;
+    nationalCode: string;
+    phone: string;
+    createdAt: string;
+    referralCode?: string;
+}
+interface Pagination {
+    currentPage?:number,
+    totalPages?:number,
+    totalCount?:number,
+    limit?:number,
+    skip?:number,
+    hasNextPage?:boolean,
+    hasPrevPage?:boolean,
+    nextPage?:number | null,
+    prevPage?:number | null;
+}
 
-const API_BASE = 'https://intelligent-colden-d2cajkshs.liara.run/api/auth'
+interface ApiResponse {
+    pagination:Pagination;
+    registers: Register[];
+    // سایر فیلدهای پاسخ API
+}
 
-const data = ref<userType[]>([])
-const loading = ref(false)
-const toast = useToast()
-const openModal = ref({
-    open: false,
-    title: '',
-    key: '',
-    data: {} as userType | null
-})
-const statusOptionsChange = ref([
-    { label: 'ثبت شده', value: 'pending' },
-    { label: 'انجام شده', value: 'done' },
-    { label: 'لغو شده', value: 'reject' }
-])
-const selectedStatus = ref<any>(null)
-const selectedId = ref<any>(null)
-const fetchData = async () => {
-    loading.value = true
-    const response: any = await $fetch(`${API_BASE}/registers`, {
+// --- Composables ---
+const toast = useToast();
+
+// --- State مدیریتی ---
+const filters = reactive({
+    page: 1,
+    take: 10,
+    // سایر فیلترها را می‌توان اینجا اضافه کرد
+    // search: ''
+});
+const config = useRuntimeConfig();
+const apiBaseUrl = config.public.apiBaseUrl;
+// --- واکشی داده با useAsyncData ---
+// این هوک به صورت خودکار داده‌ها را واکشی و مدیریت می‌کند
+const { data, status, refresh } = await useAsyncData<ApiResponse>(
+    'registers-list', // یک کلید منحصر به فرد برای کش کردن
+    () => $fetch(apiBaseUrl + 'auth/registers', { // استفاده از $fetch در useAsyncData
         method: 'POST',
         body: {
-            page: 1,
-            limit: 10,
-            filters: {}
+            page: filters.page,
+            take: filters.take,
+            filters: {} // سایر فیلترها
         }
-    });
-
-    const result = response;
-    loading.value = false
-    console.log(result);
-    data.value = result.data.registers
-
-}
-const changeStatus = async (id:string, status:string) => {
-    loading.value = true
-    const response: any = await $fetch(`${API_BASE}/register/${id}/${status}`, {
-        method: 'PUT'
-    });
-    loading.value = false
-    if (response.statusCode == 200) {
-        toast.add({
-            color:'success',
-            title:response.message
-        })
+    }),
+    {
+        watch: [() => filters.page, () => filters.take], // با تغییر صفحه یا تعداد، داده‌ها مجدد واکشی می‌شوند
+        default: () => ({ registers: [], pagination : {} }) // مقدار پیش‌فرض برای جلوگیری از خطا
     }
-    fetchData()
-    openModal.value.open = false
+);
 
-
-}
-onMounted(() => {
-    fetchData()
-})
-const columns: TableColumn<userType>[] = [
-    {
-        accessorKey: 'fullName',
-        header: 'نام و نام خانوادگی'
-    },
-    {
-        accessorKey: 'nationalCode',
-        header: 'کد ملی'
-    },
-    {
-        accessorKey: 'phone',
-        header: 'شماره تماس'
-    },
-    {
-        accessorKey: 'medicalNumber',
-        header: 'نظام پزشکی'
-    },
-    {
-        accessorKey: 'referralCode',
-        header: 'کد معرفی',
-        cell: ({ row }) => {
-            return row.original.referralCode && row.original.referralCode != '' ? row.original.referralCode : 'ندارد'
+const columns: TableColumn<Register>[]  = [
+    { accessorKey: 'fullName', header: 'نام و نام خانوادگی' },
+    { accessorKey: 'nationalCode', header: 'کد ملی' },
+    { accessorKey: 'phone', header: 'شماره تماس' },
+    { accessorKey:'birthDate' , header: 'تولد', 
+        cell: ({row}) => {
+            return useFormatDate(row.original.birthDate , 'date')
         }
     },
-    {
-        accessorKey: 'birthDate',
-        header: 'تاریخ تولد',
+    { accessorKey: 'medicalNumber', header: 'نظام پزشکی' },
+    { accessorKey:'createdAt' , header: 'تاریخ ثبت نام', 
+        cell: ({row}) => {
+            return useFormatDate(row.original.createdAt , 'mix')
+        }
     },
-    {
-        accessorKey: 'createdAt',
-        header: 'تاریخ ثبت'
-    },
-    {
+   {
         accessorKey: 'status',
         header: 'وضعیت',
         cell: ({ row }) => {
+            const status = row.getValue('status') as string
             const color = {
-                'done': 'success' as const,
-                'reject': 'error' as const,
-                'pending': 'warning' as const
-            }[row.getValue('status') as string]
-            return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
-                row.getValue('status') == 'done' ? 'انجام شده' : row.getValue('status') == 'pending' ? 'ثبت شده' : 'رد شده'
-            )
+                pending: 'warning' as const,
+                done: 'success' as const,
+                reject: 'error' as const
+            }[status] || 'neutral' as const
+
+            return h(UBadge, {
+                class: 'capitalize',
+                variant: 'subtle',
+                color
+            }, () => statusMap[row.original.status].label)
         }
     },
     {
@@ -171,7 +180,7 @@ const columns: TableColumn<userType>[] = [
                         content: {
                             align: 'end'
                         },
-                        items: getRowItems(row),
+                        items: getRowItems(row.original),
                         'aria-label': 'Actions dropdown'
                     },
                     () =>
@@ -186,22 +195,73 @@ const columns: TableColumn<userType>[] = [
             )
         }
     }
-]
-function getRowItems(row: Row<userType>) {
-    const request = row.original
-    return [
-        {
-            label: 'تغییر وضعیت',
-            onSelect() {
-                selectedId.value = request._id
-                openModal.value = {
-                    open: true,
-                    title: 'تغییر وضعیت درخواست',
-                    key: 'change-status',
-                    data: request
-                }
-            }
+];
+
+const statusMap = {
+    pending: { label: 'ثبت شده', color: 'info' as const },
+    done: { label: 'انجام شده', color: 'success' as const },
+    reject: { label: 'رد شده', color: 'error' as const },
+};
+
+const isModalOpen = ref(false);
+const isSubmitting = ref(false);
+const selectedRegister = ref<Register | null>(null);
+const selectedStatus = ref<'pending' | 'done' | 'reject'>('pending');
+
+const statusOptionsChange = [
+    { label: 'ثبت شده', value: 'pending' },
+    { label: 'انجام شده', value: 'done' },
+    { label: 'لغو شده', value: 'reject' }
+];
+
+function openStatusModal(register: Register) {
+    selectedRegister.value = register;
+    selectedStatus.value = register.status;
+    isModalOpen.value = true;
+}
+
+async function handleChangeStatus() {
+    if (!selectedRegister.value) return;
+    
+    isSubmitting.value = true;
+    try {
+        const response: any = await useApiFetch(`auth/register/${selectedRegister.value._id}/${selectedStatus.value}`, {
+            method: 'PUT'
+        });
+
+        if (response.data.value?.success || response.data.value?.statusCode === 200) {
+            toast.add({
+                title: 'موفقیت',
+                description: response.data.value.message || 'وضعیت با موفقیت تغییر کرد.',
+                color: 'success'
+            });
+            isModalOpen.value = false;
+            await refresh();
         }
+    } finally {
+        isSubmitting.value = false;
+    }
+}
+
+// --- آیتم‌های دراپ‌داون عملیات ---
+function getRowItems(row: Register) {
+    return [
+        [
+            {
+                label: 'تغییر وضعیت',
+                icon: 'i-heroicons-pencil-square-20-solid',
+                onSelect: () => {
+                    openStatusModal(row)
+                }
+            },
+            // آیتم‌های دیگر را می‌توان اینجا اضافه کرد
+            // {
+            //     label: 'حذف',
+            //     icon: 'i-heroicons-trash-20-solid',
+            //     click: () => {}
+            // }
+        ]
     ]
 }
+
 </script>

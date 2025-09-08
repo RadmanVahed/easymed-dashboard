@@ -30,6 +30,16 @@ export default defineAppConfig({
         slots:{
             header:'rtl'
         }
+    },
+    modal:{
+        slots: {
+            header: 'rtl', footer: 'justify-end'
+        }
+    },
+    pagination:{
+        slots:{
+            list:'ltr'
+        }
     }
   }
 })
